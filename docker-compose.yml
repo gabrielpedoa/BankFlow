@@ -1,0 +1,36 @@
+# docker-compose.yml
+services:
+  app:
+    build: .
+    ports:
+      - '4001:4001'
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: bankflow
+      AUTHORIZER_URL: https://eo9ggxnfribmy6a.m.pipedream.net/beta-authorizer
+      EMAIL_BASE64: seu@email.com
+    depends_on:
+      mysql:
+    condition: service_healthy
+        command: sh -c "
+        echo '⏳ Waiting DB...' &&
+        sleep 5 &&
+        npm run test &&
+        npm run test:e2e
+  "
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bankflow
+    ports:
+      - '3306:3306'
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 10
