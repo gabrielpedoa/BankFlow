@@ -156,11 +156,20 @@ export class TransfersService {
   }
 
   async processScheduledTransfers(): Promise<void> {
-    const scheduled = await this.transfersRepository.findScheduledForToday();
-    this.logger.log(`Processing ${scheduled.length} scheduled transfer(s)`);
-    await Promise.allSettled(
-      scheduled.map((transfer) => this.processTransfer(transfer)),
-    );
+    const BATCH_SIZE = 100;
+
+    while (true) {
+        const transfers = await this.transfersRepository.lockBatch(BATCH_SIZE);
+
+      if (transfers.length === 0) {
+        this.logger.log('No more scheduled transfers to process');
+        break;
+      }
+
+      this.logger.log(`Processing batch of ${transfers.length}`);
+
+      await Promise.allSettled(transfers.map((t) => this.processTransfer(t)));
+    }
   }
 
   async findAll(): Promise<Transfer[]> {

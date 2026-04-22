@@ -30,18 +30,23 @@ export class TransfersRepository {
     return this.repo.save(transfer);
   }
 
-  async findScheduledForToday(): Promise<Transfer[]> {
+  async lockBatch(limit: number): Promise<Transfer[]> {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
     const end = new Date();
     end.setHours(23, 59, 59, 999);
-    return this.repo.find({
+
+    const transfers = await this.repo.find({
       where: {
         scheduled_at: Between(start, end),
         status: TransferStatus.PENDING,
       },
+      order: { id: 'ASC' },
+      take: limit,
     });
+
+    return transfers;
   }
 
   async findAll(): Promise<Transfer[]> {
