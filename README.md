@@ -30,12 +30,8 @@ A API estará disponível em `http://localhost:4001/api`.
 
 O banco de dados sobe automaticamente e as migrations são aplicadas na inicialização. O app só inicia depois que o MySQL estiver saudável.
 
-### Rodar os testes
-
-```bash
-npm install
-npm run test
-```
+### testes
+Os testes rodam na criação do container e instancia do DB.
 
 ---
 
