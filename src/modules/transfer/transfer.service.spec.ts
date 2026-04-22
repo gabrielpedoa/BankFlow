@@ -73,7 +73,7 @@ describe('TransfersService', () => {
             create: jest.fn(),
             save: jest.fn(),
             findByIdempotencyKey: jest.fn(),
-            findScheduledForToday: jest.fn(),
+            lockBatch: jest.fn(),
             findAll: jest.fn(),
           },
         },
@@ -359,7 +359,7 @@ describe('TransfersService', () => {
 
   describe('processScheduledTransfers()', () => {
     it('não deve chamar processTransfer se não houver agendamentos para hoje', async () => {
-      transfersRepository.findScheduledForToday.mockResolvedValue([]);
+      transfersRepository.lockBatch.mockResolvedValue([]);
 
       await service.processScheduledTransfers();
 
@@ -368,11 +368,16 @@ describe('TransfersService', () => {
 
     it('deve chamar processTransfer para cada transferência agendada', async () => {
       const transfers = [makeTransfer({ id: 1 }), makeTransfer({ id: 2 })];
-      transfersRepository.findScheduledForToday.mockResolvedValue(transfers);
+
+      transfersRepository.lockBatch
+        .mockResolvedValueOnce(transfers) // primeira rodada
+        .mockResolvedValueOnce([]); // encerra loop
+
       authorizer.authorize.mockResolvedValue({
         success: true,
         authorized: true,
       });
+
       transfersRepository.save.mockImplementation(async (t) => t as Transfer);
 
       (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(
@@ -387,7 +392,10 @@ describe('TransfersService', () => {
 
     it('não deve lançar erro se uma transferência falhar — deve continuar as demais', async () => {
       const transfers = [makeTransfer({ id: 1 }), makeTransfer({ id: 2 })];
-      transfersRepository.findScheduledForToday.mockResolvedValue(transfers);
+
+      transfersRepository.lockBatch
+        .mockResolvedValueOnce(transfers)
+        .mockResolvedValueOnce([]);
 
       authorizer.authorize
         .mockRejectedValueOnce(new Error('Timeout'))
@@ -396,6 +404,7 @@ describe('TransfersService', () => {
       transfersRepository.save.mockImplementation(async (t) => t as Transfer);
 
       await expect(service.processScheduledTransfers()).resolves.not.toThrow();
+
       expect(authorizer.authorize).toHaveBeenCalledTimes(2);
     });
   });
