@@ -47,7 +47,7 @@ export class Transfer {
   status: TransferStatus;
 
   @Index()
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   scheduled_at: Date | null;
 
   @Column({ type: 'text', nullable: true })

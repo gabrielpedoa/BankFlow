@@ -1,4 +1,3 @@
-# docker-compose.yml
 services:
   app:
     build: .
@@ -11,16 +10,12 @@ services:
       DB_PASS: root
       DB_NAME: bankflow
       AUTHORIZER_URL: https://eo9ggxnfribmy6a.m.pipedream.net/beta-authorizer
-      EMAIL_BASE64: seu@email.com
+      EMAIL_BASE64: "seu@email.com"
     depends_on:
       mysql:
-    condition: service_healthy
-        command: sh -c "
-        echo '⏳ Waiting DB...' &&
-        sleep 5 &&
-        npm run test &&
-        npm run test:e2e
-  "
+        condition: service_healthy
+
+    command: sh -c "sleep 5 && npm run test && npm run test:e2e && npm start"
 
   mysql:
     image: mysql:8

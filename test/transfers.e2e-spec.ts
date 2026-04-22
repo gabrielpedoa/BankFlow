@@ -7,9 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbConfig } from 'src/config/db.config';
 import { AUTHORIZER_TOKEN } from 'src/modules/transfer/authorizer/authorizer.interface';
-import {
-  TransferStatus
-} from 'src/modules/transfer/entities/transfer.entity';
+import { TransferStatus } from 'src/modules/transfer/entities/transfer.entity';
 import { TransferModule } from 'src/modules/transfer/transfer.module';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
@@ -61,6 +59,7 @@ describe('TransfersController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.destroy();
     await app.close();
   });
 
@@ -96,7 +95,7 @@ describe('TransfersController (e2e)', () => {
         .expect(201);
 
       expect(res.body.data.status).toBe(TransferStatus.PENDING);
-      expect(res.body.data.scheduled_at).toBe('2099-12-31');
+      expect(res.body.data.scheduled_at).toBe('2099-12-31T00:00:00.000Z');
     });
 
     it('deve retornar UNAUTHORIZED quando autorizador nega', async () => {
